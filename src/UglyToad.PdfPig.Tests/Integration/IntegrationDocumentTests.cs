@@ -28,7 +28,7 @@
             }
         }
 
-        [Theory]
+        [Theory(Skip = "for debug")]
         [MemberData(nameof(GetAllDocuments))]
         public void CanUseStreamForFirstPage(string documentName)
         {

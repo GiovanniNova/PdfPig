@@ -54,10 +54,12 @@
             }
 
             AdvancedStrokingColorSpace = null;
+            var test = resourceStore.GetColorSpaceDetails(colorspace, null);
 
             if (colorspace.TryMapToColorSpace(out var colorspaceActual))
             {
                 CurrentStrokingColorSpace = colorspaceActual;
+                
             }
             else if (resourceStore.TryGetNamedColorSpace(colorspace, out var namedColorSpace))
             {
@@ -79,6 +81,8 @@
             {
                 DefaultColorSpace();
             }
+
+            
         }
 
         public void SetNonStrokingColorspace(NameToken colorspace)
@@ -111,6 +115,7 @@
             }
 
             AdvancedNonStrokingColorSpace = null;
+            var test = resourceStore.GetColorSpaceDetails(colorspace, null);
 
             if (colorspace.TryMapToColorSpace(out var colorspaceActual))
             {

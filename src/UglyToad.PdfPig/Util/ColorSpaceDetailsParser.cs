@@ -415,6 +415,8 @@
                         }
                         else if (DirectObjectFinder.TryGet(func, scanner, out StreamToken functionStream))
                         {
+                            functionStream = new StreamToken(functionStream.StreamDictionary.Without(NameToken.Filter).Without(NameToken.F),
+                                functionStream.Decode(filterProvider, scanner));
                             functionTokensUnion = Union<DictionaryToken, StreamToken>.Two(functionStream);
                         }
                         else

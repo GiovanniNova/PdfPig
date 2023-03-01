@@ -6,6 +6,7 @@
     using System.Linq;
     using Tokens;
     using UglyToad.PdfPig.Content;
+    using UglyToad.PdfPig.Functions;
     using UglyToad.PdfPig.Util;
     using UglyToad.PdfPig.Util.JetBrains.Annotations;
 
@@ -167,7 +168,15 @@
         /// The function is called with the tint value and must return the corresponding color component values.
         /// That is, the number of components and the interpretation of their values depend on the <see cref="AlternateColorSpaceDetails"/>.
         /// </summary>
-        public Union<DictionaryToken, StreamToken> TintFunction { get; }
+        public Union<DictionaryToken, StreamToken> TintFunctionData { get; }
+
+        /// <summary>
+        /// During subsequent painting operations, an application calls this function to transform a tint value into
+        /// color component values in the alternate color space.
+        /// The function is called with the tint value and must return the corresponding color component values.
+        /// That is, the number of components and the interpretation of their values depend on the <see cref="AlternateColorSpaceDetails"/>.
+        /// </summary>
+        public PdfFunction TintFunction { get; }
 
         /// <summary>
         /// Create a new <see cref="SeparationColorSpaceDetails"/>.
@@ -179,7 +188,8 @@
         {
             Name = name;
             AlternateColorSpaceDetails = alternateColorSpaceDetails;
-            TintFunction = tintFunction;
+            TintFunctionData = tintFunction;
+            TintFunction = PdfFunction.Create(tintFunction);
         }
     }
 

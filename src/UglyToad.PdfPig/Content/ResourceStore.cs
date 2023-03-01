@@ -1,17 +1,20 @@
 ﻿namespace UglyToad.PdfPig.Content
 {
-    using System;
-    using System.Collections.Generic;
     using Core;
     using Graphics.Colors;
     using Parser.Parts;
     using PdfFonts;
+    using System;
+    using System.Collections.Generic;
     using Tokenization.Scanner;
     using Tokens;
+    using UglyToad.PdfPig.Filters;
     using Util;
 
     internal class ResourceStore : IResourceStore
     {
+        private readonly FilterProviderWithLookup filterProvider = new FilterProviderWithLookup(DefaultFilterProvider.Instance);
+
         private readonly IPdfTokenScanner scanner;
         private readonly IFontFactory fontFactory;
 
@@ -24,6 +27,8 @@
         private readonly Dictionary<NameToken, ResourceColorSpace> namedColorSpaces = new Dictionary<NameToken, ResourceColorSpace>();
 
         private readonly Dictionary<NameToken, DictionaryToken> markedContentProperties = new Dictionary<NameToken, DictionaryToken>();
+
+        private readonly Dictionary<NameToken, ColorSpaceDetails> loadedNamedColorSpaceDetails = new Dictionary<NameToken, ColorSpaceDetails>();
 
         private (NameToken name, IFont font) lastLoadedFont;
 
@@ -158,7 +163,7 @@
                     }
 
                     try
-                    { 
+                    {
                         loadedFonts[reference] = fontFactory.Get(fontObject);
                     }
                     catch
@@ -168,7 +173,7 @@
                             throw;
                         }
                     }
-                    
+
                 }
                 else if (pair.Value is DictionaryToken fd)
                 {
@@ -234,6 +239,49 @@
             namedToken = colorSpaceName;
 
             return true;
+        }
+
+        public ColorSpaceDetails GetColorSpaceDetails(NameToken name, DictionaryToken dictionary)
+        {
+            if (name.TryMapToColorSpace(out var colorspaceActual))
+            {
+                dictionary ??= new DictionaryToken(new Dictionary<NameToken, IToken>());
+                return ColorSpaceDetailsParser.GetColorSpaceDetails(colorspaceActual, dictionary, scanner, this, filterProvider);
+            }
+            else if (loadedNamedColorSpaceDetails.TryGetValue(name, out ColorSpaceDetails csdLoaded))
+            {
+                return csdLoaded;
+            }
+            else if (TryGetNamedColorSpace(name, out var namedColorSpace))
+            {
+                if (dictionary != null)
+                {
+                    // TODO
+                }
+
+                if (namedColorSpace.Name.TryMapToColorSpace(out var mapped))
+                {
+                    DictionaryToken dic = null;
+                    if (namedColorSpace.Data is ArrayToken csArray)
+                    {
+                        dic = new DictionaryToken(
+                            new Dictionary<NameToken, IToken>
+                            {
+                                { NameToken.ColorSpace, csArray }
+                            });
+                    }
+                    else if (namedColorSpace.Data is NameToken csName)
+                    {
+                        // TODO
+                    }
+
+                    dic ??= new DictionaryToken(new Dictionary<NameToken, IToken>());
+                    var csd = ColorSpaceDetailsParser.GetColorSpaceDetails(mapped, dic, scanner, this, filterProvider);
+                    loadedNamedColorSpaceDetails.Add(name, csd);
+                    return csd;
+                }
+            }
+            throw new InvalidOperationException("GetColorSpaceDetails");
         }
 
         public StreamToken GetXObject(NameToken name)

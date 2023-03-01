@@ -257,10 +257,10 @@
 
             // Check the next 3 bytes if available
             // The following cases are valid indicators for the end of the string
-            // 1. Next line contains another COSObject: CR + LF + '/'
-            // 2. COSDictionary ends in the next line: CR + LF + '>'
-            // 3. Next line contains another COSObject: CR + '/'
-            // 4. COSDictionary ends in the next line: CR + '>'
+            // 1. Next line contains another object: CR + LF + '/'
+            // 2. Dictionary ends in the next line: CR + LF + '>'
+            // 3. Next line contains another object: CR + '/'
+            // 4. Dictionary ends in the next line: CR + '>'
             if (amountRead == 3 && nextThreeBytes[0] == carriageReturn)
             {
                 if ((nextThreeBytes[1] == lineFeed && (nextThreeBytes[2] == '/') || nextThreeBytes[2] == '>')
