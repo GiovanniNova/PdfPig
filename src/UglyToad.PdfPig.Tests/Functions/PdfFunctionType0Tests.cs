@@ -1,7 +1,6 @@
 ﻿namespace UglyToad.PdfPig.Tests.Functions
 {
     using System;
-    using System.Collections;
     using System.Collections.Generic;
     using System.Linq;
     using UglyToad.PdfPig.Functions;
@@ -45,7 +44,7 @@
             Assert.Equal(4, result.Length);
         }
 
-        [Fact(Skip = "not now")]
+        [Fact]
         public void Simple16()
         {
             DictionaryToken dictionaryToken = new DictionaryToken(new Dictionary<NameToken, IToken>()
@@ -84,7 +83,7 @@
             Assert.Equal(1.00, result[0], 2);
         }
 
-        [Fact(Skip = "not now")]
+        [Fact]
         public void Simple8()
         {
             DictionaryToken dictionaryToken = new DictionaryToken(new Dictionary<NameToken, IToken>()
@@ -121,6 +120,81 @@
             result = function0.Eval(new double[] { 1.0 });
             Assert.Single(result);
             Assert.Equal(1.00, result[0], 2);
+        }
+
+        [Fact]
+        public void RgbColorSpace()
+        {
+            DictionaryToken dictionaryToken = new DictionaryToken(new Dictionary<NameToken, IToken>()
+            {
+                { NameToken.FunctionType, new NumericToken(0) },
+                { NameToken.Domain, GetArrayToken(0, 1, 0, 1) },
+                { NameToken.Range, GetArrayToken(0, 1, 0, 1, 0, 1) },
+
+                { NameToken.BitsPerSample, new NumericToken(8) },
+                { NameToken.Size, GetArrayToken(2, 2) }
+            });
+
+            byte[] data = new byte[] { 255, 255, 0, 0, 0, 0, 255, 0, 0, 0, 0, 255 };
+
+            StreamToken function = new StreamToken(dictionaryToken, data);
+
+            var function0 = new PdfFunctionType0(function);
+            var result = function0.Eval(new double[] { 0, 0 });
+            Assert.Equal(3, result.Length);
+            Assert.Equal(new double[] {1, 1, 0 }, result); // yellow
+
+            result = function0.Eval(new double[] { 1, 0 });
+            Assert.Equal(3, result.Length);
+            Assert.Equal(new double[] { 0, 0, 0 }, result); // black
+
+            result = function0.Eval(new double[] { 0, 1 });
+            Assert.Equal(3, result.Length);
+            Assert.Equal(new double[] { 1, 0, 0 }, result); // red
+
+            result = function0.Eval(new double[] { 1, 1 });
+            Assert.Equal(3, result.Length);
+            Assert.Equal(new double[] { 0, 0, 1 }, result); // blue
+
+            result = function0.Eval(new double[] { 0.5, 0.5 });
+            Assert.Equal(3, result.Length);
+            Assert.Equal(new double[] { 0.5, 0.25, 0.25 }, result); // Mid point
+        }
+
+        [Fact]
+        public void RedBlueGradient()
+        {
+            DictionaryToken dictionaryToken = new DictionaryToken(new Dictionary<NameToken, IToken>()
+            {
+                { NameToken.FunctionType, new NumericToken(0) },
+                { NameToken.Domain, GetArrayToken(0, 1) },
+                { NameToken.Range, GetArrayToken(0, 1, 0, 1, 0, 1) },
+
+                { NameToken.BitsPerSample, new NumericToken(8) },
+                { NameToken.Size, GetArrayToken(2) }
+            });
+
+            byte[] data = new byte[] { 255, 0, 0, 0, 0, 255 };
+
+            StreamToken function = new StreamToken(dictionaryToken, data);
+
+            var function0 = new PdfFunctionType0(function);
+
+            var result = function0.Eval(new double[] { 0 });
+            Assert.Equal(3, result.Length);
+            Assert.Equal(new double[] { 1, 0, 0 }, result); // red
+
+            result = function0.Eval(new double[] { 1 });
+            Assert.Equal(3, result.Length);
+            Assert.Equal(new double[] { 0, 0, 1 }, result); // blue
+
+            result = function0.Eval(new double[] { 0.5 });
+            Assert.Equal(3, result.Length);
+            Assert.Equal(new double[] { 0.5, 0.0, 0.5 }, result); // Mid point
+
+            result = function0.Eval(new double[] { 0.3333 });
+            Assert.Equal(3, result.Length);
+            Assert.Equal(new double[] { 0.6667, 0.0, 0.3333 }, result); // 1/3 point
         }
     }
 }
