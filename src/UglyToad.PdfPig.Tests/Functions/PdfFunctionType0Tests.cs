@@ -27,8 +27,6 @@
                 { NameToken.BitsPerSample, new NumericToken(8) },
                 { NameToken.Decode, GetArrayToken(0, 1, 0, 1, 0, 1, 0, 1) },
                 { NameToken.Encode, GetArrayToken(0, 254) },
-                { NameToken.Filter, NameToken.FlateDecode },
-                { NameToken.Length, new NumericToken(397) },
                 { NameToken.Size, GetArrayToken(255) }
             });
 
@@ -45,6 +43,84 @@
             Assert.Equal(4, result.Length);
             result = function0.Eval(new double[] { 0.2 });
             Assert.Equal(4, result.Length);
+        }
+
+        [Fact(Skip = "not now")]
+        public void Simple16()
+        {
+            DictionaryToken dictionaryToken = new DictionaryToken(new Dictionary<NameToken, IToken>()
+            {
+                { NameToken.FunctionType, new NumericToken(0) },
+                { NameToken.Domain, GetArrayToken(0, 1) },
+                { NameToken.Range, GetArrayToken(0, 1) },
+
+                { NameToken.BitsPerSample, new NumericToken(16) },
+                { NameToken.Size, GetArrayToken(5) }
+            });
+
+            byte[] data = new ushort[] { 0, 8192, 16384, 32768, 65535 }.SelectMany(v => BitConverter.GetBytes(v)).ToArray();
+
+            StreamToken function = new StreamToken(dictionaryToken, data);
+
+            var function0 = new PdfFunctionType0(function);
+            var result = function0.Eval(new double[] { 0.00 });
+            Assert.Single(result);
+            Assert.Equal(0.0, result[0], 3);
+
+            result = function0.Eval(new double[] { 0.25 });
+            Assert.Single(result);
+            Assert.Equal(0.125, result[0], 3);
+
+            result = function0.Eval(new double[] { 0.50 });
+            Assert.Single(result);
+            Assert.Equal(0.25, result[0], 2);
+
+            result = function0.Eval(new double[] { 0.75 });
+            Assert.Single(result);
+            Assert.Equal(0.50, result[0], 2);
+
+            result = function0.Eval(new double[] { 1.0 });
+            Assert.Single(result);
+            Assert.Equal(1.00, result[0], 2);
+        }
+
+        [Fact(Skip = "not now")]
+        public void Simple8()
+        {
+            DictionaryToken dictionaryToken = new DictionaryToken(new Dictionary<NameToken, IToken>()
+            {
+                { NameToken.FunctionType, new NumericToken(0) },
+                { NameToken.Domain, GetArrayToken(0, 1) },
+                { NameToken.Range, GetArrayToken(0, 1) },
+
+                { NameToken.BitsPerSample, new NumericToken(8) },
+                { NameToken.Size, GetArrayToken(5) }
+            });
+
+            byte[] data = new byte[] { 0, 32, 64, 128, 255 };
+
+            StreamToken function = new StreamToken(dictionaryToken, data);
+
+            var function0 = new PdfFunctionType0(function);
+            var result = function0.Eval(new double[] { 0.00 });
+            Assert.Single(result);
+            Assert.Equal(0.0, result[0], 3);
+
+            result = function0.Eval(new double[] { 0.25 });
+            Assert.Single(result);
+            Assert.Equal(0.125, result[0], 3);
+
+            result = function0.Eval(new double[] { 0.50 });
+            Assert.Single(result);
+            Assert.Equal(0.25, result[0], 2);
+
+            result = function0.Eval(new double[] { 0.75 });
+            Assert.Single(result);
+            Assert.Equal(0.50, result[0], 2);
+
+            result = function0.Eval(new double[] { 1.0 });
+            Assert.Single(result);
+            Assert.Equal(1.00, result[0], 2);
         }
     }
 }

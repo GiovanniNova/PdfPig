@@ -3,6 +3,7 @@
     using System;
     using System.Collections;
     using System.Collections.Generic;
+    using System.Collections.Specialized;
     using System.IO;
     using System.Linq;
     using UglyToad.PdfPig.Core;
@@ -342,7 +343,7 @@
                 }
                 samples = new int[arraySize][];
                 int bitsPerSample = BitsPerSample;
-                int index = 0;
+
                 try
                 {
                     // PDF spec 1.7 p.171:
@@ -352,21 +353,20 @@
 
                     System.Diagnostics.Debug.Assert(bits.Length == arraySize * nOut * bitsPerSample);
 
-                    int b = 0;
                     for (int i = 0; i < arraySize; i++)
                     {
                         samples[i] = new int[nOut];
                         for (int k = 0; k < nOut; k++)
                         {
                             long accum = 0L;
-                            for (int l = 0; l < bitsPerSample; l++)
+                            for (int l = bitsPerSample - 1; l >= 0; l--)
                             {
                                 accum <<= 1; // Shift left one bit to make room
-                                accum |= bits[b++] ? (uint)1 : 0;
+                                accum |= bits[i * nOut * bitsPerSample + (k * bitsPerSample) + l] ? (uint)1 : 0;
                             }
-                            samples[index][k] = (int)accum;
+
+                            samples[i][k] = (int)accum;
                         }
-                        index++;
                     }
                 }
                 catch (IOException exception)
