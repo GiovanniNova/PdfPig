@@ -802,6 +802,89 @@
         }
 
         /// <summary>
+        /// Adds the TIFF image represented by the input bytes at the specified location.
+        /// </summary>
+        /*public AddedImage AddTiff(byte[] fileBytes, int width, int height, int bitsPerComponent, int numberOfComponents, int photometricInterpretation, PdfRectangle placementRectangle)
+        {
+            using (var stream = new MemoryStream(fileBytes))
+            {
+                return AddTiff(stream, width, height, bitsPerComponent, numberOfComponents, photometricInterpretation, placementRectangle);
+            }
+        }*/
+
+        /// <summary>
+        /// Adds the TIFF image represented by the input stream at the specified location.
+        /// </summary>
+        public AddedImage AddTiff(byte[] data, int width, int height, int bitsPerComponent, int numberOfComponents, int photometricInterpretation, PdfRectangle placementRectangle = default)
+        {
+            var info = new TiffInformation(width, height, bitsPerComponent, numberOfComponents);
+
+            if (placementRectangle.Equals(default(PdfRectangle)))
+            {
+                placementRectangle = new PdfRectangle(
+                    0,
+                    0,
+                    info.Width,
+                    info.Height);
+            }
+
+            NameToken colorSpace;
+            if (info.NumberOfComponents == 1)
+            {
+                colorSpace = NameToken.Devicegray;
+            }
+            else if (info.NumberOfComponents == 4)
+            {
+                colorSpace = NameToken.Devicecmyk;
+            }
+            else
+            {
+                colorSpace = NameToken.Devicergb;
+            }
+
+            var filter = new Dictionary<NameToken, IToken>
+            {
+                {NameToken.K, new NumericToken(-1) },
+                {NameToken.BlackIs1, photometricInterpretation == 1 ? BooleanToken.True : BooleanToken.False },
+                {NameToken.Columns, new NumericToken(info.Width) },
+                {NameToken.Rows, new NumericToken(info.Height) }
+            };
+
+            var imgDictionary = new Dictionary<NameToken, IToken>
+            {
+                {NameToken.Type, NameToken.Xobject },
+                {NameToken.Subtype, NameToken.Image },
+                {NameToken.Width, new NumericToken(info.Width) },
+                {NameToken.Height, new NumericToken(info.Height) },
+                {NameToken.BitsPerComponent, new NumericToken(info.BitsPerComponent)},
+                {NameToken.ColorSpace, colorSpace},
+                {NameToken.Filter, NameToken.CcittfaxDecode},
+                {NameToken.DecodeParms, new DictionaryToken(filter)},
+                {NameToken.Length, new NumericToken(data.Length)}
+            };
+
+            var reference = documentBuilder.AddImage(new DictionaryToken(imgDictionary), data);
+            var resources = pageDictionary.GetOrCreateDict(NameToken.Resources);
+            var xObjects = resources.GetOrCreateDict(NameToken.Xobject);
+
+            var key = NameToken.Create(xobjectsNames.NewName());
+            xObjects[key] = reference;
+
+            currentStream.Add(Push.Value);
+            // This needs to be the placement rectangle.
+            currentStream.Add(new ModifyCurrentTransformationMatrix(new[]
+            {
+                placementRectangle.Width, 0,
+                0, placementRectangle.Height,
+                placementRectangle.BottomLeft.X, placementRectangle.BottomLeft.Y
+            }));
+            currentStream.Add(new InvokeNamedXObject(key));
+            currentStream.Add(Pop.Value);
+
+            return new AddedImage(reference.Data, info.Width, info.Height);
+        }
+
+        /// <summary>
         /// Copy a page from unknown source to this page
         /// </summary>
         /// <param name="srcPage">Page to be copied</param>
